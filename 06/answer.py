@@ -45,32 +45,31 @@ def guard_move(array,loc,_directions,_direction,obj_list,last_two):
     rows = len(array[0])
     x,y = loc
     dx,dy = _directions[_direction]
-    array[y][x] = "^"
+
+    # array[y][x] = "^"
     # show_locale(array,loc, rows, cols)
     array[y][x] = 'X'
-    if 0<x+dx>=rows or 0<y+dy>=cols:
+    if (x+dx < 0 or x+dx >= rows) or (y+dy < 0 or y+dy >= cols):
         return array,'','','','',True,False
-    try:
-        if array[y+dy][x+dx] == '#':
-            next_loc = (x+dx,y+dy)
-            newtwo = []
-            if len(last_two) > 0:
-                newtwo.append(last_two[-1])
-            newtwo.append(next_loc)
-            if is_subset(obj_list,newtwo):
-                # print(f"FOUND: \n{obj_list}\n{newtwo}")
-                return array,'','','','',True,True
-            obj_list.append(next_loc)
-            if _direction == NORTH:
-                _direction = WEST
-            else:
-                _direction -= 1
-            dx,dy = _directions[_direction]
+    if array[y+dy][x+dx] == '#':
+        next_loc = (x+dx,y+dy)
+        newtwo = []
+        if len(last_two) > 0:
+            newtwo.append(last_two[-1])
+        newtwo.append(next_loc)
+        if is_subset(obj_list,newtwo):
+            print(f"FOUND: \n{obj_list}\n{newtwo}")
+            return array,'','',obj_list,'',True,True
+        obj_list.append(next_loc)
+        if _direction == NORTH:
+            _direction = WEST
         else:
-            newtwo = last_two
-    except Exception as e:
-        print(f"ERROR: {e}")
-        print(f"Cols = {cols}\nRows = {rows}\nTried Loc = {(x+dx,y+dy)}")
+            _direction -= 1
+        dx,dy = _directions[_direction]
+    else:
+        newtwo = last_two
+    if not 'newtwo' in locals():
+        newtwo = last_two
     next_loc = (x+dx,y+dy)
     return array,next_loc,_direction,obj_list,newtwo,False,False
 
@@ -82,6 +81,16 @@ def find_start(array):
             if array[i][j] == '^':
                 return (j,i)
 
+def same_list(list1, list2):
+    col1 = len(list1)
+    col2 = len(list2)
+    if col1 != col2:
+        return True
+    for col in range(col1):
+            if list1[col] != list2[col]:
+                return True
+    print(f"These are the same\n{list1}\n{list2}")
+    return False
 
 newlines = []
 with open('input','r') as f:
@@ -99,7 +108,7 @@ hit_list = []
 lasttwo = []
 maps = newlines.copy()
 while not done:
-    maps, next_pos, direction,hit_list,lasttwo, done, found= guard_move(maps,next_pos,directions,direction,hit_list,lasttwo)
+    maps, next_pos, direction,hit_list,lasttwo, done, found = guard_move(maps,next_pos,directions,direction,hit_list,lasttwo)
 result = 0
 if found:
     print("FOUND")
@@ -113,8 +122,11 @@ print(result)
 
 
 result = 0
+prev_hit_list = []
+count = 0
 for row in range(len(maps)):
     for col in range(len(maps[0])):
+        
         if maps[row][col] == "X":
             direction = NORTH
             done = False
@@ -122,13 +134,18 @@ for row in range(len(maps)):
             next_pos = start_pos
             hit_list = []
             lasttwo = []
+            tmparr = []
             tmparr = newlines.copy()
-            tmparr[row][col]="#"
+            tmparr[col][row]="#"
+            print(f"placed [{col}][{row}]")
             while not done:
                 tmparr, next_pos, direction,hit_list,lasttwo, done, found= guard_move(tmparr,next_pos,directions,direction,hit_list,lasttwo)
-            if found:
+            if found and same_list(hit_list, prev_hit_list):
                 result += 1
-                # print(result)
+                print(result)
             else:
-                print(f"Fail : {row*col-result}")
+                # pass
+                print(f"Fail : {count}")
+            prev_hit_list = hit_list
+            count += 1
 print(result)
